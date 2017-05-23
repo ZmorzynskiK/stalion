@@ -10,10 +10,7 @@ namespace Stalion.Models
     /// </summary>
     public class EditableString
     {
-        /// <summary>
-        /// Arbitrary Id type
-        /// </summary>
-        public object Id { get; set; }
+        public long Id { get; set; }
         public int Key { get; set; }
         public string Value { get; set; }
         public string Context { get; set; }
@@ -29,7 +26,7 @@ namespace Stalion.Models
             Index = index;
         }
 
-        public EditableString(object id, int key, string context, int? index, string value, string languageCode)
+        public EditableString(long id, int key, string context, int? index, string value, string languageCode)
         {
             Id = id;
             Context = context;
