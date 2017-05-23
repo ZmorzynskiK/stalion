@@ -64,4 +64,13 @@ namespace Stalion.Models
         }
 
     }
+
+    public class EditableStringDictionary : Dictionary<string, IList<EditableString>>
+    {
+        public EditableStringDictionary()
+            : base(StringComparer.OrdinalIgnoreCase)
+        {
+        }
+    }
+
 }
