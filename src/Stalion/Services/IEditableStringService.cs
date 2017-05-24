@@ -14,7 +14,8 @@ namespace Stalion.Services
         bool Update(object id, string languageCode, string value);
         int StoreEditableStrings(string languageCode, Models.EditableStringDictionary source);
 
-        IList<Models.EditableString> Search(int? searchKey, string searchContext, string searchValue, string languageCode, int pageIndex, int pageSize, out int total);
+        Storage.IPersistentEditableString GetById(object id);
+        IList<Storage.IPersistentEditableString> Search(int? searchKey, string searchContext, string searchValue, string languageCode, int pageIndex, int pageSize, out int total);
 
         string ExportToCSV(string languageCode, bool getOnlyTheSameAsOriginalValues);
         int UpdateFromCSV(string languageCode, string csv, out IList<int> errorLines);

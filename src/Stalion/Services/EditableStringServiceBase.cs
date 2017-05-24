@@ -26,7 +26,6 @@ namespace Stalion.Services
         protected abstract Services.IEditableStringCacheService cacheService { get; }
         
         protected abstract IQueryable<Storage.IPersistentEditableString> getDbQuery();
-        protected abstract Storage.IPersistentEditableString getById( object id );
         protected abstract void storeNewPersistentString(int key, string context, int? index, string value, string originalValue, string language);
         protected abstract void updatePersistentString(Storage.IPersistentEditableString obj);
 
@@ -61,7 +60,9 @@ namespace Stalion.Services
 
         }
 
-        public virtual IList<EditableString> Search(int? searchKey, string searchContext, string searchValue, string languageCode, int pageIndex, int pageSize, out int total)
+        public abstract Storage.IPersistentEditableString GetById(object id);
+
+        public virtual IList<Storage.IPersistentEditableString> Search(int? searchKey, string searchContext, string searchValue, string languageCode, int pageIndex, int pageSize, out int total)
         {
             var q = getDbQuery();
 
@@ -76,7 +77,7 @@ namespace Stalion.Services
 
             total = q.Count();
             var list = q.Skip(pageIndex * pageSize).Take(pageSize).ToList();
-            return toEditableStringList(list);
+            return list;
 
         }
 
@@ -187,7 +188,7 @@ namespace Stalion.Services
             {
                 beginDbTransaction();
 
-                obj = getById(id);
+                obj = GetById(id);
                 if(obj == null)
                 {
                     // we can only update here
