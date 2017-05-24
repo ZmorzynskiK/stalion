@@ -23,7 +23,7 @@ namespace Stalion.Services
             return string.Format(CACHE_PER_LANG_CONTEXT_KEY, languageCode, context).ToLowerInvariant();
         }
 
-        protected Services.IEditableStringCacheService cacheService { get; }
+        protected abstract Services.IEditableStringCacheService cacheService { get; }
         
         protected abstract IQueryable<Storage.IPersistentEditableString> getDbQuery();
         protected abstract Storage.IPersistentEditableString getById( object id );
