@@ -11,8 +11,7 @@ namespace Stalion.Services
         string Name { get; }
 
         Models.EditableString GetString(string context, string t, int? idx);
-        Models.EditableString GetById(long id);
-        bool Update(long id, string languageCode, string value);
+        bool Update(object id, string languageCode, string value);
         int StoreEditableStrings(string languageCode, Models.EditableStringDictionary source);
 
         IList<Models.EditableString> Search(int? searchKey, string searchContext, string searchValue, string languageCode, int pageIndex, int pageSize, out int total);

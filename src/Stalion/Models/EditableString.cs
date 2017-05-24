@@ -6,11 +6,13 @@ using System.Text;
 namespace Stalion.Models
 {
     /// <summary>
-    /// Represents a string that is editable.
+    /// Represents a string that is editable. This entity is NOT directly taken from database.
     /// </summary>
     public class EditableString
     {
-        public long Id { get; set; }
+        /// <summary>
+        ///  This is a "key" corresponding to a particular string. Most likely this will be a hashcode so this isn't necessary unique.
+        /// </summary>
         public int Key { get; set; }
         public string Value { get; set; }
         public string Context { get; set; }
@@ -26,9 +28,8 @@ namespace Stalion.Models
             Index = index;
         }
 
-        public EditableString(long id, int key, string context, int? index, string value, string languageCode)
+        public EditableString(int key, string context, int? index, string value, string languageCode)
         {
-            Id = id;
             Context = context;
             Key = key;
             Value = value;

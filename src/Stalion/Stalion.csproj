@@ -75,7 +75,10 @@
     <Compile Include="MVC\StalionTextGetter.cs" />
     <Compile Include="MVC\StalionWebViewPage.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Services\EditableStringServiceBase.cs" />
+    <Compile Include="Services\IEditableStringCacheService.cs" />
     <Compile Include="Services\IEditableStringService.cs" />
+    <Compile Include="Storage\IPersistentEditableString.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
