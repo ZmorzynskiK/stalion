@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Stalion.Extensions;
 using Stalion.Models;
 
 namespace Stalion.Services
@@ -22,9 +23,8 @@ namespace Stalion.Services
             return string.Format(CACHE_PER_LANG_CONTEXT_KEY, languageCode, context).ToLowerInvariant();
         }
 
-        protected abstract Dictionary<int, Models.EditableString> getCachedStrings(string cacheKey);
-        protected abstract void removeFromCacheByPattern(string cachePattern);
-
+        protected Services.IEditableStringCacheService cacheService { get; }
+        
         protected abstract IQueryable<Storage.IPersistentEditableString> getDbQuery();
         protected abstract Storage.IPersistentEditableString getById( object id );
         protected abstract void storeNewPersistentString(int key, string context, int? index, string value, string originalValue, string language);
@@ -45,7 +45,13 @@ namespace Stalion.Services
             var langCode = curUICulture.TwoLetterISOLanguageName;
             // we are caching by contexts and language
             string cacheKey = getCacheContextKey(langCode, context);
-            var stringsInContext = getCachedStrings(cacheKey);
+            var stringsInContext = cacheService.Get(cacheKey, -1,
+                () =>
+                {
+                    var inContext = getDbQuery().Where(x => x.ESContext == context && x.ESLanguageCode == langCode).ToList();
+                    return toEditableStringList(inContext).ToDictionary(x => x.Key);
+                });
+
             int key = EditableString.GetKey(context, t, idx);
             // find key in our (possibly cached) list
             EditableString found = null;
@@ -108,7 +114,7 @@ namespace Stalion.Services
             }
 
             if(added > 0)
-                removeFromCacheByPattern(CACHE_PER_LANG_CONTEXT_KEY);
+                cacheService.RemoveByPattern(CACHE_PER_LANG_CONTEXT_KEY);
 
             return added;
 
@@ -167,7 +173,7 @@ namespace Stalion.Services
             }
             // remove conext from cache
             if(updatedCount > 0)
-                removeFromCacheByPattern(CACHE_PER_LANG_CONTEXT_KEY);
+                cacheService.RemoveByPattern(CACHE_PER_LANG_CONTEXT_KEY);
 
             return updatedCount;
 
@@ -208,7 +214,7 @@ namespace Stalion.Services
             if(!string.IsNullOrWhiteSpace(obj.ESContext))
             {
                 string cacheKey = getCacheContextKey(languageCode, obj.ESContext);
-                removeFromCacheByPattern(cacheKey);
+                cacheService.Remove(cacheKey);
             }
             return true;
         }
@@ -296,7 +302,7 @@ namespace Stalion.Services
             }
             // remove from cache
             if(updatedCount > 0)
-                removeFromCacheByPattern(CACHE_PER_LANG_CONTEXT_KEY);
+                cacheService.RemoveByPattern(CACHE_PER_LANG_CONTEXT_KEY);
 
             return updatedCount;
 
