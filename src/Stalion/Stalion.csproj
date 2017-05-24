@@ -71,6 +71,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Extensions\CacheServiceExtensions.cs" />
     <Compile Include="Models\EditableString.cs" />
     <Compile Include="MVC\StalionTextGetter.cs" />
     <Compile Include="MVC\StalionWebViewPage.cs" />
