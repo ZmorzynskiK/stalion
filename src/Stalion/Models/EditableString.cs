@@ -51,14 +51,29 @@ namespace Stalion.Models
             return Key.GetHashCode();
         }
 
+        public static int GetHashString(string text)
+        {
+            if(string.IsNullOrWhiteSpace(text))
+                return 0;
+
+            unchecked
+            {
+                int hash = 23;
+                foreach(char c in text)
+                {
+                    hash = hash * 31 + c;
+                }
+                return hash;
+            }
+        }
 
         public static int GetKey(string context, string val, int? idx)
         {
             // for now just return hash code of the string
             string t = (context + "_" + val).ToLowerInvariant();
             if(idx != null)
-                return (t + "_" + idx).GetHashCode();
-            return t.GetHashCode();
+                return GetHashString(t + "_" + idx);
+            return GetHashString(t);
         }
 
     }

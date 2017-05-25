@@ -332,5 +332,40 @@ namespace Stalion.Services
 
         }
 
+        public virtual int RecalcKeys()
+        {
+            int updatedCount = 0;
+
+            try
+            {
+                beginDbTransaction();
+                
+                var existingData = getDbQuery().ToList();
+                foreach( var es in existingData )
+                {
+                    es.ESKey = EditableString.GetKey(es.ESContext, es.ESOriginalValue, es.ESIndex);
+                    updatePersistentString(es);
+                    updatedCount++;
+                }
+                
+                commitDbTransaction();
+            }
+            catch(Exception ex)
+            {
+                logError("Error updating keys", ex);
+                rollbackDbTransaction();
+                updatedCount = -1;
+            }
+            finally
+            {
+                disposeDbTransaction();
+            }
+
+            // remove from cache
+            if(updatedCount > 0)
+                cacheService.RemoveByPattern(CACHE_PER_LANG_CONTEXT_KEY);
+
+            return updatedCount;
+        }
     }
 }
