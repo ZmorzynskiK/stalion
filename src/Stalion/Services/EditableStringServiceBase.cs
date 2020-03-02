@@ -28,6 +28,7 @@ namespace Stalion.Services
         protected abstract IQueryable<Storage.IPersistentEditableString> getDbQuery();
         protected abstract void storeNewPersistentString(int key, string context, int? index, string value, string originalValue, string language);
         protected abstract void updatePersistentString(Storage.IPersistentEditableString obj);
+        protected abstract void deletePersistentString(Storage.IPersistentEditableString obj);
 
         protected abstract IList<Models.EditableString> toEditableStringList(IEnumerable<Storage.IPersistentEditableString> src);
 
@@ -366,6 +367,75 @@ namespace Stalion.Services
                 cacheService.RemoveByPattern(CACHE_PER_LANG_CONTEXT_KEY);
 
             return updatedCount;
+        }
+
+        public bool Create(string context, int? idx, string langCode, string value, string orgValue)
+        {
+            // start transaction
+            try
+            {
+                beginDbTransaction();
+
+                int key = EditableString.GetKey(context, orgValue, idx);
+                storeNewPersistentString(key, context, idx, value, orgValue, langCode);
+
+                commitDbTransaction();
+            }
+            catch (Exception ex)
+            {
+                logError("Error creating ES", ex);
+                rollbackDbTransaction();
+                return false;
+            }
+            finally
+            {
+                disposeDbTransaction();
+            }
+            // remove conext from cache
+            if (!string.IsNullOrWhiteSpace(context))
+            {
+                string cacheKey = getCacheContextKey(langCode, context);
+                cacheService.Remove(cacheKey);
+            }
+            return true;
+        }
+
+        public bool Delete(object id)
+        {
+            Storage.IPersistentEditableString obj = null;
+            // start transaction
+            try
+            {
+                beginDbTransaction();
+
+                obj = GetById(id);
+                if (obj == null)
+                {
+                    // we can only delete here
+                    return false;
+                }
+
+                deletePersistentString(obj);
+
+                commitDbTransaction();
+            }
+            catch (Exception ex)
+            {
+                logError("Error deleting ES", ex);
+                rollbackDbTransaction();
+                return false;
+            }
+            finally
+            {
+                disposeDbTransaction();
+            }
+            // remove conext from cache
+            if (!string.IsNullOrWhiteSpace(obj.ESContext))
+            {
+                string cacheKey = getCacheContextKey(obj.ESLanguageCode, obj.ESContext);
+                cacheService.Remove(cacheKey);
+            }
+            return true;
         }
     }
 }
