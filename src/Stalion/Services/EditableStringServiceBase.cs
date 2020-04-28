@@ -350,7 +350,7 @@ namespace Stalion.Services
                 string ctx = sanitizeCsvValue(str.ESContext);
                 string val = sanitizeCsvValue(str.ESValue);
                 string orgVal = sanitizeCsvValue(str.ESOriginalValue);
-                sb.AppendFormat("\"{0}\";\"{1}\"", str.ESKey, ctx, str.ESIndex, val, orgVal).AppendLine();
+                sb.AppendFormat("\"{0}\";\"{1}\";\"{2}\";\"{3}\";\"{4}\"", str.ESKey, ctx, str.ESIndex, val, orgVal).AppendLine();
             }
             return sb.ToString();
         }
