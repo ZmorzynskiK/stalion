@@ -325,12 +325,125 @@ namespace Stalion.Services
                 // get all ids with the same text
                 var keys = string.Join(",", grouped.Select(x => x.ESKey.ToString()));
                 // prepare value
-                string val = grouped.Key.Replace('"', '\'').Replace(';', ',');
+                string val = sanitizeCsvValue(grouped.Key);
                 // write csv
                 sb.AppendFormat("\"{0}\";\"{1}\"", val, keys).AppendLine();
             }
             return sb.ToString();
 
+        }
+
+        private string sanitizeCsvValue(string input)
+        {
+            return input.Replace('"', '\'').Replace(';', ',').Replace(Environment.NewLine, " ");
+        }
+
+        public virtual string GetAllDataToCsv(string languageCode)
+        {
+            // get all data for this language and group by value
+            var allData = getDbQuery().Where(x => x.ESLanguageCode == languageCode).ToList();
+            StringBuilder sb = new StringBuilder();
+            sb.AppendLine("Key;Context;Index;Value;OrgValue");
+            foreach (var str in allData)
+            {
+                // prepare values
+                string ctx = sanitizeCsvValue(str.ESContext);
+                string val = sanitizeCsvValue(str.ESValue);
+                string orgVal = sanitizeCsvValue(str.ESOriginalValue);
+                sb.AppendFormat("\"{0}\";\"{1}\"", str.ESKey, ctx, str.ESIndex, val, orgVal).AppendLine();
+            }
+            return sb.ToString();
+        }
+
+        public virtual int SetAllDataFromCsv(string languageCode, string csv, out IList<int> errorLines)
+        {
+            int updatedCount = 0;
+            errorLines = new List<int>();
+            try
+            {
+                beginDbTransaction();
+
+                using (var sr = new System.IO.StringReader(csv))
+                {
+                    var existingData = getDbQuery().ToList();
+
+                    // ignore header
+                    sr.ReadLine();
+                    int ln = 1;
+                    string line = null;
+                    while ((line = sr.ReadLine()) != null)
+                    {
+                        var elems = line.Split(';');
+                        if (elems.Length != 5 || string.IsNullOrWhiteSpace(elems[0]) || string.IsNullOrWhiteSpace(elems[1]))
+                            errorLines.Add(ln);
+                        else
+                        {
+                            //"Key [0];Context [1];Index [2];Value [3];OrgValue [4]"
+                            int key;
+                            if (!int.TryParse(elems[0].Trim('"'), out key))
+                            {
+                                errorLines.Add(ln);
+                                ln++;
+                                continue;
+                            }
+                            string ctx = elems[1].Trim('"');
+                            int? index = null;
+                            string idxStr = elems[2].Trim('"');
+                            if (!string.IsNullOrWhiteSpace(idxStr))
+                            {
+                                int tid;
+                                if (!int.TryParse(idxStr, out tid))
+                                {
+                                    errorLines.Add(ln);
+                                    ln++;
+                                    continue;
+                                }
+                                index = tid;
+                            }
+                            string val = elems[3].Trim('"');
+                            string orgVal = elems[4].Trim('"');
+                            if (string.IsNullOrWhiteSpace(orgVal))
+                            {
+                                errorLines.Add(ln);
+                                ln++;
+                                continue;
+                            }
+                            // now we have id and value, find this object in our list with the same language code first
+                            var foundInThisLanguage = existingData.FirstOrDefault(x => x.ESKey == key && x.ESLanguageCode == languageCode);
+                            if (foundInThisLanguage != null) //only update if we found text
+                            {
+                                foundInThisLanguage.ESValue = val;
+                                updatePersistentString(foundInThisLanguage);
+                                updatedCount++;
+                            }
+                            else
+                            {
+                               // create new entry for this language and copy data from this 
+                               storeNewPersistentString(key, ctx, index, val, orgVal, languageCode);
+                               updatedCount++;
+                            }
+                        }
+                        ln++;
+                    }
+                }
+
+                commitDbTransaction();
+            }
+            catch (Exception ex)
+            {
+                logError("Error updating ES list", ex);
+                rollbackDbTransaction();
+                updatedCount = -1;
+            }
+            finally
+            {
+                disposeDbTransaction();
+            }
+            // remove from cache
+            if (updatedCount > 0)
+                cacheService.RemoveByPattern(CACHE_PER_LANG_CONTEXT_KEY);
+
+            return updatedCount;
         }
 
         public virtual int RecalcKeys()

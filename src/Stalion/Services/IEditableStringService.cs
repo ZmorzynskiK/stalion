@@ -23,5 +23,8 @@ namespace Stalion.Services
         string ExportToCSV(string languageCode, bool getOnlyTheSameAsOriginalValues);
         int UpdateFromCSV(string languageCode, string csv, out IList<int> errorLines);
         int TryTranslateAutomatic(string languageCode);
+
+        int SetAllDataFromCsv(string languageCode, string csv, out IList<int> errorLines);
+        string GetAllDataToCsv(string languageCode);
     }
 }
